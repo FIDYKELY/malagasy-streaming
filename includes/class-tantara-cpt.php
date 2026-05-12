@@ -31,7 +31,25 @@ class Tantara_CPT{
             'show_in_rest' => true
         ];
         register_post_type('tantara_malagasy', $args);
-    }
+        add_filter('rest_prepare_tantara_malagasy', [$this, 'add_custom_field_to_rest'], 10,3);
+        }
+        public function add_custom_field_to_rest($response, $post, $request){
+            $fields = [
+                'conteur',
+                'url_audio',
+                'duree',
+                'langue'
+            ];
+            foreach($fields as $field){
+                $meta_key = '_tantara_' . $field;
+                $value = get_post_meta($post->ID, $meta_key, true);
+                if($field === "url_audio"){
+                    $value = $value ? esc_url_raw($value) : '';
+                }
+            $response->data['_meta_' . $field] = $value;
+            }
+            return $response;
+        }
 }
 
 class Tantara_Metabox{

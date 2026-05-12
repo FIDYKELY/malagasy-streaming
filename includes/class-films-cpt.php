@@ -35,7 +35,27 @@ class Films_CPT {
         ];
 
         register_post_type('film_malagasy', $args);
-    }
+        add_filter('rest_prepare_film_malagasy', [$this, 'add_custom_fields_to_rest'], 10,3);
+
+        }
+        public function add_custom_fields_to_rest($response, $post, $request){
+            $fields = [
+                'realisateur',
+                'annee',
+                'url_video_hls',
+                'duree',
+                'licence'
+            ];
+        foreach($fields as $field){
+            $meta_key = '_film_' . $field;
+            $value = get_post_meta($post->ID, $meta_key, true);
+            if ($field === 'url_video_hls') {
+                $value = $value ? esc_url_raw($value) : '';
+            }
+            $response->data['meta_' . $field] = $value;
+            }
+            return $response;
+        }
 }
 
 class Films_Metabox{
