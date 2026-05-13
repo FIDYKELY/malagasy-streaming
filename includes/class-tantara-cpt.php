@@ -31,6 +31,21 @@ class Tantara_CPT{
             'show_in_rest' => true
         ];
         register_post_type('tantara_malagasy', $args);
+
+        register_taxonomy('tantara_conteur', 'tantara_malagasy', [
+            'label' => 'Conteurs',
+            'hierachical' => false,
+            'show_in_rest' => true,
+            'show_admin_column' => true
+        ]);
+
+        register_taxonomy('tantara_theme', 'tantara_malagasy', [
+            'label' => 'Thèmes',
+            'hierarchical' => true,
+            'show_in_rest' => true,
+            'show_admin_column' => true
+        ]);
+
         add_filter('rest_prepare_tantara_malagasy', [$this, 'add_custom_field_to_rest'], 10,3);
         }
         public function add_custom_field_to_rest($response, $post, $request){
@@ -76,6 +91,8 @@ class Tantara_Metabox{
         $url_audio = get_post_meta($post->ID, '_tantara_url_audio', true);
         $duree = get_post_meta($post->ID, '_tantara_duree', true);
         $langue = get_post_meta($post->ID, '_tantara_langue', true);
+        $prix = get_post_meta($post->ID, '_tantara_prix', true);
+        $access_type = get_post_meta($post->ID, '_content_access_type', true);
         ?>
 
          <p>
@@ -104,6 +121,22 @@ class Tantara_Metabox{
                    style="width:100%;">
         </p>
 
+        <p>
+            <label>Type d'accès</label><br>
+            <select name="content_access_type" style="width:100%;">
+                <option value="freemium" <?php selected($access_type, 'freemium'); ?>>Gratuit (avec pub)</option>
+                <option value="premium" <?php selected($access_type, 'premium'); ?>>Réservé aux abonnés</option>
+                <option value="payperview" <?php selected($access_type, 'payperview'); ?>>À l'acte</option>
+            </select>
+        </p>
+
+        <p>
+            <label>Prix (Ar) – Pay-per-view uniquement</label><br>
+            <input type="number" name="tantara_prix"
+                   value="<?php echo esc_attr($prix); ?>"
+                   style="width:100%;">
+        </p>
+
         <?php
     }
     public function save_metabox($post_id){
@@ -124,6 +157,14 @@ class Tantara_Metabox{
             'tantara_duree',
             'tantara_langue'
         ];
+
+        if (isset($_POST['content_access_type'])) {
+            update_post_meta($post_id, '_content_access_type', sanitize_text_field($_POST['content_access_type']));
+        }
+
+        if (isset($_POST['tantara_prix'])) {
+            update_post_meta($post_id, '_tantara_prix', absint($_POST['tantara_prix']));
+        }
 
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {

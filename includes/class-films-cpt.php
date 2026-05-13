@@ -35,6 +35,22 @@ class Films_CPT {
         ];
 
         register_post_type('film_malagasy', $args);
+
+        register_taxonomy('film_genre', 'film_malagasy', [
+            'label' => 'Genres',
+            'hierarchical' => true,
+            'show_in_rest' => true,
+            'show_admin_column' => true
+        ]);
+
+        register_taxonomy('film_realisateur', 'film_malagasy', [
+            'label' => 'Réalisateurs',
+            'hierarchical' => false,
+            'show_in_rest' => true,
+            'show_admin_column' => true
+        ]);
+        
+
         add_filter('rest_prepare_film_malagasy', [$this, 'add_custom_fields_to_rest'], 10,3);
 
         }
@@ -83,6 +99,8 @@ class Films_Metabox{
         $url_video  = get_post_meta($post->ID, '_film_url_video_hls', true);
         $duree = get_post_meta($post->ID, '_film_duree', true);
         $licence  = get_post_meta($post->ID, '_film_licence', true);
+        $prix = get_post_meta($post->ID, '_film_prix', true);
+        $access_type = get_post_meta($post->ID, '_content_access_type', true);
         ?>
 
          <p>
@@ -118,6 +136,22 @@ class Films_Metabox{
                    style="width:100%;">
         </p>
 
+        <p>
+            <label>Type d'accès</label><br>
+            <select name="content_access_type" style="width:100%;">
+                <option value="freemium" <?php selected($access_type, 'freemium'); ?>>Gratuit (avec pub)</option>
+                <option value="premium" <?php selected($access_type, 'premium'); ?>>Réservé aux abonnés</option>
+                <option value="payperview" <?php selected($access_type, 'payperview'); ?>>À l'acte</option>
+            </select>
+        </p>
+
+        <p>
+            <label>Prix (Ar) – Pay-per-view uniquement</label><br>
+            <input type="number" name="film_prix"
+                   value="<?php echo esc_attr($prix); ?>"
+                   style="width:100%;">
+        </p>
+
         <?php
     }
 
@@ -145,6 +179,14 @@ class Films_Metabox{
             'film_duree',
             'film_licence'
         ];
+
+        if (isset($_POST['content_access_type'])) {
+            update_post_meta($post_id, '_content_access_type', sanitize_text_field($_POST['content_access_type']));
+        }
+
+        if (isset($_POST['film_prix'])) {
+            update_post_meta($post_id, '_film_prix', absint($_POST['film_prix']));
+        }
 
         foreach ($fields as $field) {
 
