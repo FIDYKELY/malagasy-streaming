@@ -21,6 +21,39 @@ class Malagasy_Auth {
                 return is_user_logged_in();
             }
         ]);
+        register_rest_route('malagasy/v1', '/register', [
+            'methods' => 'POST',
+            'callback' => 'malagasy_register_user',
+            'permission_callback' => '__return_true'
+        ]);
+    }
+    public function malagasy_register_user($request){
+        $params = $request->get_json_params();
+        $username = sanitize_user($params['username'] ?? '');
+        $email = sanitize_email($params['email'] ?? '');
+        $password = $params['password'] ?? '';
+
+        if (empty($username) || empty($email) || empty($password)) {
+            return new WP_Error('missing_fields', 'Tous les champs sont requis', ['status' => 400]);
+        }
+        if (!is_email($email)) {
+            return new WP_Error('invalid_email', 'Email invalide', ['status' => 400]);
+        }
+        if (username_exists($username)) {
+            return new WP_Error('username_exists', 'Ce nom d\'utilisateur existe déjà', ['status' => 400]);
+        }
+        if (email_exists($email)) {
+            return new WP_Error('email_exists', 'Cet email est déjà utilisé', ['status' => 400]);
+        }
+        $user_id = wp_create_user($username, $password, $email);
+        if (is_wp_error($user_id)) {
+            return $user_id;
+        }
+
+        return rest_ensure_response([
+            'success' => true,
+            'message' => 'Inscription réussie. Vous pouvez maintenant vous connecter.'
+        ]);
     }
 
     public function handle_login( $request ) {
